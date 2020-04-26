@@ -22,7 +22,6 @@
 #include <dynamic_libs/padscore_functions.h>
 
 #include "MainWindow.h"
-#include "menu/tv/MainWindowTV.h"
 #include "menu/drc/MainWindowDRC.h"
 #include "Application.h"
 
@@ -209,8 +208,7 @@ void MainWindow::SetupMainView()
 {
 
     DrcFrame =  new MainWindowDRC(width,height);
-    TvFrame =  new MainWindowTV(width,height);
-    //TvFrame =  DrcFrame;
+    TvFrame =  DrcFrame;
     appendTv(TvFrame);
     appendDrc(DrcFrame);
 }

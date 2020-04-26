@@ -16,7 +16,6 @@
  ****************************************************************************/
 #include "ContentController.h"
 #include "menu/drc/MainWindowDRC.h"
-#include "menu/tv/MainWindowTV.h"
 
 ContentController::ContentController(UController_Type controller_type_): ContentTemplate()
     , controller_type(controller_type_)
