@@ -55,6 +55,8 @@ private:
 
     GuiTrigger buttonUpTrigger;
     GuiTrigger buttonDownTrigger;
+    GuiTrigger buttonRightTrigger;
+    GuiTrigger buttonLeftTrigger;
 
     GuiTrigger touchTrigger;
     GuiButton DPADButtons;
@@ -76,6 +78,8 @@ private:
     s32 selectedItem = 0;
     s32 lastSelectedItem = -1;
 
+    bool is_in_settings_menu = false;
+
     void setState(s32 i, s32 c);
     void update(GuiController * c);
 
@@ -84,6 +88,8 @@ private:
     void calculateAndSetOffsets(std::vector<GuiElement*>& elements,f32 total_offset);
     void listAppend(GuiElement * listElement);
     void OnDPADClick(GuiButton *button, const GuiController *controller, GuiTrigger *trigger);
+
+    s32 getSettingsIndex();
 
     void OnOpenEffectFinish(GuiElement *element);
 };

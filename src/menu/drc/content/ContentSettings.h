@@ -31,6 +31,9 @@ public:
     ContentSettings();
     virtual ~ContentSettings();
 
+    bool isSelected = false;
+    void selectionChanged();
+
 private:
     GuiTrigger touchTrigger;
     GuiTrigger wpadTouchTrigger;
@@ -46,6 +49,13 @@ private:
     DefaultGuiSwitch musicSwitch;
     DefaultGuiSwitch networkControllerSwitch;
 
+    GuiTrigger buttonUpTrigger;
+    GuiTrigger buttonDownTrigger;
+    GuiTrigger buttonATrigger;
+
+    GuiButton DPADButtons;
+    GuiButton AButton;
+
     GuiSound *buttonClickSound;
 
     std::map<std::string,GuiElement*> settings;
@@ -56,12 +66,21 @@ private:
 
     bool bChanged = false;
 
+    bool isInSelectBox = false;
+
     void OnSelectBoxValueChanged(GuiSelectBox * selectBox, std::string value);
 
     void OnMusicValueChanged(GuiToggle * toggle,bool value);
     void OnRumbleValueChanged(GuiToggle * toggle,bool value);
     void OnNetworkControllerValueChanged(GuiToggle * toggle,bool value);
 
+    std::string getSelectedSetting();
+    int settingToIndex(std::string setting);
+
+    void OnLanguageBoxShowHide(GuiSelectBox* selectBox, bool showValues);
+
+    void OnDPADClick(GuiButton *button, const GuiController *controller, GuiTrigger *trigger);
+    void OnAClick(GuiButton *button, const GuiController *controller, GuiTrigger *trigger);
 };
 
 #endif //_CONTENT_SETTINGS_H

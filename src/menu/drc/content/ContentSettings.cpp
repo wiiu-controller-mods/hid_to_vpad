@@ -29,6 +29,11 @@ ContentSettings::ContentSettings():ContentTemplate()
     , rumbleSwitch(CSettings::instance()->getValueAsBool(CSettings::RumbleActivated))
     , musicSwitch(CSettings::instance()->getValueAsBool(CSettings::MusicActivated))
     , networkControllerSwitch(CSettings::instance()->getValueAsBool(CSettings::NetworkControllerActivated))
+    , buttonUpTrigger(GuiTrigger::CHANNEL_ALL, GuiTrigger::BUTTON_UP | GuiTrigger::STICK_L_UP, true)
+    , buttonDownTrigger(GuiTrigger::CHANNEL_ALL, GuiTrigger::BUTTON_DOWN | GuiTrigger::STICK_L_DOWN, true)
+    , buttonATrigger(GuiTrigger::CHANNEL_ALL, GuiTrigger::BUTTON_A, true)
+    , DPADButtons(0, 0)
+    , AButton(0, 0)
     , buttonClickSound(Resources::GetSound("settings_click_2.mp3"))
     {
     headLine.setText(gettext("Settings"));
@@ -92,6 +97,7 @@ ContentSettings::ContentSettings():ContentTemplate()
 
     languageSelectBox.Init(languagesNames,selectedID);
     languageSelectBox.valueChanged.connect(this, &ContentSettings::OnSelectBoxValueChanged);
+    languageSelectBox.showhide.connect(this, &ContentSettings::OnLanguageBoxShowHide);
 
     f32 frameoffset = 0;
     f32 frameheight = 80.0f;
@@ -131,6 +137,15 @@ ContentSettings::ContentSettings():ContentTemplate()
         toDelete.push_back(text);
     }
     settingsFrame.bringToFront(settingsFrames.at(&languageSelectBox));
+
+    DPADButtons.setTrigger(&buttonDownTrigger);
+    DPADButtons.setTrigger(&buttonUpTrigger);
+    DPADButtons.clicked.connect(this, &ContentSettings::OnDPADClick);
+    append(&DPADButtons);
+
+    AButton.setTrigger(&buttonATrigger);
+    AButton.clicked.connect(this, &ContentSettings::OnAClick);
+    append(&AButton);
 }
 
 ContentSettings::~ContentSettings(){
@@ -148,6 +163,21 @@ ContentSettings::~ContentSettings(){
     }
 }
 
+void ContentSettings::selectionChanged()
+{
+    if (isSelected)
+    {
+        settings[settingsOrder[0]]->setState(STATE_SELECTED);
+    }
+    else
+    {
+        for (unsigned int i = 0; i < settingsOrder.size(); i++)
+        {
+            settings[settingsOrder[i]]->clearState(STATE_SELECTED);
+        }
+    }
+    
+}
 
 void ContentSettings::OnSelectBoxValueChanged(GuiSelectBox * selectBox, std::string value){
     if(selectBox == &languageSelectBox){
@@ -179,4 +209,75 @@ void ContentSettings::OnNetworkControllerValueChanged(GuiToggle * toggle,bool va
         ControllerPatcher::startNetworkServer();
     }
     bChanged = true;
+}
+
+std::string ContentSettings::getSelectedSetting()
+{
+    for (unsigned int i = 0; i < settingsOrder.size(); i++)
+    {
+        GuiElement* element = settings[settingsOrder[i]];
+        if (element->isStateSet(STATE_SELECTED))
+            return settingsOrder[i];
+    }
+
+    return "";
+}
+
+int ContentSettings::settingToIndex(std::string setting)
+{
+    for (unsigned int i = 0; i < settingsOrder.size(); i++)
+    {
+        if (settingsOrder[i] == setting)
+            return i;
+    }
+    return -1;
+}
+
+void ContentSettings::OnLanguageBoxShowHide(GuiSelectBox* selectBox, bool showValues)
+{
+    isInSelectBox = showValues;
+}
+
+void ContentSettings::OnDPADClick(GuiButton *button, const GuiController *controller, GuiTrigger *trigger)
+{
+    if (isInSelectBox)
+        return;
+
+    std::string setting = getSelectedSetting();
+    int index = settingToIndex(setting);
+    if (!setting.empty() && index >= 0)
+    {
+        if (trigger == &buttonDownTrigger && index < (int) settingsOrder.size() - 1)
+        {
+            settings[setting]->clearState(STATE_SELECTED);
+            settings[settingsOrder[index + 1]]->setState(STATE_SELECTED);
+        }
+        if (trigger == &buttonUpTrigger && index > 0)
+        {
+            settings[setting]->clearState(STATE_SELECTED);
+            settings[settingsOrder[index - 1]]->setState(STATE_SELECTED);
+        }
+    }
+}
+
+void ContentSettings::OnAClick(GuiButton *button, const GuiController *controller, GuiTrigger *trigger)
+{
+    if (isInSelectBox)
+        return;
+
+    std::string setting = getSelectedSetting();
+    if (!setting.empty())
+    {
+        DefaultGuiSwitch* gui_switch = dynamic_cast<DefaultGuiSwitch*>(settings[setting]);
+        if (gui_switch != NULL)
+        {
+            gui_switch->clicked(gui_switch, controller, trigger);
+        }
+
+        DefaultGuiSelectBox* select_box = dynamic_cast<DefaultGuiSelectBox*>(settings[setting]);
+        if (select_box != NULL)
+        {
+            select_box->OnTopValueClicked(NULL, NULL, NULL);
+        }
+    }
 }

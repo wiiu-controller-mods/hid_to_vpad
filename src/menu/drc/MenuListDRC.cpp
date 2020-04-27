@@ -20,6 +20,7 @@
 #include "content/ContentAbout.h"
 #include "content/ContentHelp.h"
 #include "content/ContentController.h"
+#include "content/ContentSettings.h"
 #include <utils/logger.h>
 
 MenuListDRC::MenuListDRC(s32 w, s32 h,MainWindowContent * _contentWindow)
@@ -43,6 +44,8 @@ MenuListDRC::MenuListDRC(s32 w, s32 h,MainWindowContent * _contentWindow)
     , elementAbout(gettext("About"),    "aboutIcon.png", ContentTemplate::CONTENT_ABOUT)
     , buttonUpTrigger(GuiTrigger::CHANNEL_ALL, GuiTrigger::BUTTON_UP | GuiTrigger::STICK_L_UP, true)
     , buttonDownTrigger(GuiTrigger::CHANNEL_ALL, GuiTrigger::BUTTON_DOWN | GuiTrigger::STICK_L_DOWN, true)
+    , buttonRightTrigger(GuiTrigger::CHANNEL_ALL, GuiTrigger::BUTTON_RIGHT | GuiTrigger::STICK_L_RIGHT, true)
+    , buttonLeftTrigger(GuiTrigger::CHANNEL_ALL, GuiTrigger::BUTTON_LEFT | GuiTrigger::STICK_L_LEFT, true)
     , touchTrigger(GuiTrigger::CHANNEL_1, GuiTrigger::VPAD_TOUCH)
     , DPADButtons(0,0)
     , VPADDrag(w,h)
@@ -74,6 +77,8 @@ MenuListDRC::MenuListDRC(s32 w, s32 h,MainWindowContent * _contentWindow)
 
     DPADButtons.setTrigger(&buttonDownTrigger);
     DPADButtons.setTrigger(&buttonUpTrigger);
+    DPADButtons.setTrigger(&buttonRightTrigger);
+    DPADButtons.setTrigger(&buttonLeftTrigger);
     DPADButtons.clicked.connect(this, &MenuListDRC::OnDPADClick);
 
     VPADDrag.setTrigger(&touchTrigger);
@@ -138,6 +143,9 @@ void MenuListDRC::OnButtonClicked(GuiButton *button, const GuiController *contro
         GuiButton* buttonElement = dynamic_cast<GuiButton*>(element);
         if(button == buttonElement){
             selectedItem = i;
+            int settingsIndex = getSettingsIndex();
+            if (selectedItem != settingsIndex)
+                is_in_settings_menu = false;
             break;
         }
         i++;
@@ -146,7 +154,33 @@ void MenuListDRC::OnButtonClicked(GuiButton *button, const GuiController *contro
 }
 
 void MenuListDRC::OnDPADClick(GuiButton *button, const GuiController *controller, GuiTrigger *trigger){
-    if(trigger == &buttonUpTrigger || trigger == &buttonDownTrigger){
+    if (trigger == &buttonRightTrigger && !is_in_settings_menu)
+    {
+        int settingsIndex = getSettingsIndex();
+        if (settingsIndex > 0 && selectedItem == settingsIndex)
+        {
+            is_in_settings_menu = true;
+            ContentSettings* settingsScreen = dynamic_cast<ContentSettings*>(contentWindow->getContent());
+            if (settingsScreen != NULL)
+            {
+                settingsScreen->isSelected = is_in_settings_menu;
+                settingsScreen->selectionChanged();
+            }
+        }
+    }
+
+    if (trigger == &buttonLeftTrigger && is_in_settings_menu)
+    {
+        is_in_settings_menu = false;
+        ContentSettings* settingsScreen = dynamic_cast<ContentSettings*>(contentWindow->getContent());
+        if (settingsScreen != NULL)
+        {
+            settingsScreen->isSelected = is_in_settings_menu;
+            settingsScreen->selectionChanged();
+        }
+    }
+
+    if(!is_in_settings_menu && (trigger == &buttonUpTrigger || trigger == &buttonDownTrigger)){
         if(trigger == &buttonUpTrigger){
                 if(selectedItem > 0){
                     selectedItem--;
@@ -158,6 +192,19 @@ void MenuListDRC::OnDPADClick(GuiButton *button, const GuiController *controller
         }
         dpad_selection_changed = true;
     }
+}
+
+s32 MenuListDRC::getSettingsIndex()
+{
+    for (unsigned int i = 0; i < listElementsButtons.size(); i++)
+    {
+        if (listElementsButtons[i] == &elementSettings)
+        {
+            return i;
+        }
+    }
+
+    return -1;
 }
 
 void MenuListDRC::addToTotalOffset(f32 added_offset){
