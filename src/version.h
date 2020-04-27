@@ -1,2 +1,2 @@
-#define APP_VERION "v0.9k"
+#define APP_VERION "Controller Mod v1"
 
